@@ -1,21 +1,21 @@
 title = "One Button";
-description = "";
-characters = [];
 options = {
   viewSize: { x: 100, y: 100 },
   theme: "shapeDark"
 };
 
-var maxDist = 0.15;
-var radius = 30;
+const maxDist = 4.5;
+const radius = 30;
+const speed_inc = 0.002;
 var speed;
 var dir;
 var angle_player;
 var angle_goal;
+var nearGoal;
 
 function update() {
 
-  // setup stuff
+  // setup
   if (!ticks) {
     speed = 0.02;
     dir = 1;
@@ -23,42 +23,42 @@ function update() {
     moveGoal();
   }
 
-  // key press
-  if (input.isJustPressed) {
-
-    // check if player hit goal
-    var dist = Math.abs(angle_player - angle_goal);
-    if (dist <= maxDist) {
-      moveGoal();
-      dir *= -1;
-      score += 1;
-    }
-    
-  }
-
+  // draw goal
   var x_goal = 50 + radius * Math.cos(angle_goal);
   var y_goal = 50 + radius * Math.sin(angle_goal);
   color("blue");
   rect(x_goal, y_goal, 6, 6);
 
+  // draw player
   var x_player = 50 + radius * Math.cos(angle_player);
   var y_player = 50 + radius * Math.sin(angle_player);
   color("green");
   rect(x_player, y_player, 6, 6);
 
-  // distance between player and goal
   var dist = Math.sqrt(Math.pow(x_goal - x_player, 2) + Math.pow(y_goal - y_player, 2));
-  if (dist <= maxDist) {
-    console.log("aaa");
+
+   // check if player is near, or past goal
+   // I know I could have done without the nearGoal variable but that would have taken more brain power
+   if (!nearGoal) {
+    if (dist <= maxDist) {
+      nearGoal = true;
+    }
   } else {
-    // The moving square has moved past the still square.
-    console.log("Moving square has moved past the still square.");
+    if (dist >= maxDist) {
+      end();
+    }
   }
   
-  // rotate player, wrap around
   angle_player += (speed * dir);
-  if (angle_player > 2 * Math.PI) angle_player -= 2 * Math.PI;
-  if (angle_player < 0) angle_player += 2 * Math.PI;
+
+  // on button press, if payer is near goal
+  if (input.isJustPressed && dist <= maxDist) {
+    moveGoal();
+    dir *= -1;
+    score += 1;
+    speed += speed_inc;
+  }
+
 }
 
 function moveGoal() {
@@ -66,8 +66,5 @@ function moveGoal() {
   var maxDegrees = 270;
   var randomDegrees = Math.random() * (maxDegrees - minDegrees) + minDegrees;
   angle_goal = angle_player + (randomDegrees * (Math.PI / 180));
-
-  // wrap around
-  if (angle_goal > 2 * Math.PI) angle_goal -= 2 * Math.PI;
-  if (angle_goal < 0) angle_goal += 2 * Math.PI;
+  nearGoal = false;
 }
